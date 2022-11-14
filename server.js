@@ -2,12 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const authenticateJWT = require("./middleware/authMiddleware");
 const app = express();
-// const connection = new WebSocket('ws://localhost:3000');
 // router
 const userRouter = require("./routers/userRoute");
-const researchRouter = require("./routers/researchRoute")
-const bodyParser = require("body-parser");
+const researchRouter = require("./routers/researchRoute");
 
+const bodyParser = require("body-parser");
 app.enable("trust proxy");
 // allowed cors *
 app.use(cors());
