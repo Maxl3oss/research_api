@@ -29,5 +29,5 @@ app.use("/api/user", userRouter);
 app.use("/api/research", researchRouter);
 // app.use("/api", authenticateJWT, userRouter);
 app.listen(3000, () => {
-  console.log(`listening on port 3000`);
+  console.log(`listening on port 3000 `);
 });
