@@ -8,7 +8,7 @@ exports.getAll = (req, res) => {
             return res.status(200).json({
                status: true,
                message: "Ok",
-               res: data,
+               data: data,
             });
          } else {
             return res.status(400).json({
