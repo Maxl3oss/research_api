@@ -13,11 +13,10 @@ exports.signIn = (req, res) => {
     if (data.length > 0) {
       // if not verify email
       if (data[0].isVerified === 0) {
-        res.status(401).json({
+        return res.status(401).json({
           status: "fail",
           message: "This email not verify yet!",
         });
-        return;
       }
       // check password
       const isCorrect = await bcrypt.compare(pass, data[0].user_pass);
@@ -32,20 +31,20 @@ exports.signIn = (req, res) => {
             expiresIn: '100'
           });
 
-        res.status(200).json({
+        return res.status(200).json({
           status: "success",
           message: "Login successfully",
           data: data[0],
           token: token,
         });
       } else {
-        res.status(401).json({
+        return res.status(401).json({
           status: "fail",
           message: "Incorrect email or password",
         });
       }
     } else {
-      res.status(401).json({
+      return res.status(401).json({
         status: "fail",
         message: "Incorrect email or password",
       });
@@ -79,7 +78,7 @@ exports.signUp = async (req, res) => {
       to: email,
       subject: "Research - verify your email",
       html: `<div class="center" style="color: #fff; background-color: #222; font-family:courier; width: 100%; text-align:center; ">
-                <h1 style="padding: 35px 0px 0px;">${fname} ${lname}!</h1><br/>
+                <h1 style="padding: 35px 0px 0px;">${fname} ${lname}!</h1>
                 <h2>Thanks for registering on our site.</h2>
                 <h4>Please verify your mail to continue...</h4>
                 <img width="250px" src="cid:imageMailer" alt="" />
@@ -110,14 +109,14 @@ exports.signUp = async (req, res) => {
     tranSporter.sendMail(option, (err, info) => {
       if (err) {
         console.log('error => ', err);
-        res.status(400).json({
+        return res.status(400).json({
           status: "fail",
           message: "Fail to send mail.",
         });
         return;
       } else {
         console.log('Send => ' + info.response);
-        res.status(200).json({
+        return res.status(200).json({
           status: "success",
           message: `Send verify to (${email}).`,
         });

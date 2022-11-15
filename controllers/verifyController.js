@@ -6,7 +6,7 @@ exports.verifyEmail = async (req, res) => {
    const email = jwt.decode(req.query.mail);
    console.log(email);
    if (email === null) {
-      res.status(400).send(`
+      return res.status(400).send(`
          <title>Verified</title>
          <link rel="icon" href="${__dirname}/images/iconscout_logo.ico" />
          <body style="background-color: #222; color: #fff; font-family:courier; width: 100%; text-align:center;">
@@ -15,12 +15,11 @@ exports.verifyEmail = async (req, res) => {
             </h1>
          </body>
          `);
-      return;
    }
    const query = `UPDATE users SET isVerified="1" WHERE user_email="${email.mail}"`;
    db.query(query, async (err, data) => {
       if (err) {
-         res.status(400).send(`
+         return res.status(400).send(`
          <title>Verified</title>
          <link rel="icon" href="${__dirname}/images/iconscout_logo.ico" />
          <body style="background-color: #222; color: #fff; font-family:courier; width: 100%; text-align:center;">
@@ -30,9 +29,8 @@ exports.verifyEmail = async (req, res) => {
          </body>
          `);
       }
-      return;
    })
-   res.status(200).send(`
+   return res.status(200).send(`
       <title>Verified</title>
       <link rel="icon" href="${__dirname}/images/iconscout_logo.ico" />
       <body style="background-color: #222; color: #fff; font-family:courier; width: 100%; text-align:center;">
