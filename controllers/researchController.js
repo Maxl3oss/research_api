@@ -35,9 +35,13 @@ exports.getLimit = (req, res) => {
       const search = req.query.search;
 
       let query = `SELECT * FROM research`;
-      if (search && type) query += ` WHERE ${type} LIKE "%${search}%"`;
+      if (search && type === "all") {
+         query += ` WHERE title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%"`;
+      } else {
+         if (search && type) query += ` WHERE ${type} LIKE "%${search}%"`;
+      }
       query += ` LIMIT ${start_idx},${per_page}`;
-      console.log(query);
+      // console.log(query);
 
       db.query(query, async (err, data) => {
          // console.log(data);
@@ -59,6 +63,7 @@ exports.getLimit = (req, res) => {
             return res.status(200).json({
                status: "success",
                message: "Not Found",
+               data: data,
             });
          }
       })
