@@ -1,4 +1,7 @@
 const db = require("../database/conn");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv").config();
+const { faker } = require("@faker-js/faker");
 
 exports.getAll = (req, res) => {
    try {
@@ -44,11 +47,12 @@ exports.getLimit = (req, res) => {
       // console.log(query);
 
       db.query(query, async (err, data) => {
-         // console.log(data);
+         const qtyCount = query.replace("*", "COUNT(id)").split(" ").slice(0, -2).join(" ");
+         // console.log(qtyCount);
          if (data.length) {
             //count data research
-            db.query("SELECT COUNT(id) as count FROM research", (err, result) => {
-               const total = result[0]['count'];
+            db.query(qtyCount, (err, result) => {
+               const total = result[0]['COUNT(id)'];
                return res.status(200).json({
                   status: "success",
                   page: page,
@@ -75,4 +79,31 @@ exports.getLimit = (req, res) => {
          data: err,
       })
    }
+}
+
+exports.post = (req, res) => {
+   const token = req.headers.authorization.split(" ")[1];
+   let decoded = jwt.verify(token, dotenv.parsed.TOKEN_SECRET);
+   console.log(token);
+   // for (i = 0; i <= 100; i++) {
+   //    const createRS = {
+   //       title: faker.commerce.product(),
+   //       title_alternative: faker.company.name(),
+   //       creator: faker.internet.userName(),
+   //       subject: faker.animal.cat(),
+   //       description: faker.lorem.paragraph(),
+   //       publisher: faker.internet.userName(),
+   //       contributor: faker.internet.userName(),
+   //       date: new Date().toISOString().slice(0, 19).replace('T', ' '),
+   //       source: faker.internet.userName(),
+   //       language: "tha",
+   //       rights: faker.internet.userName()
+   //    }
+   //    const query = `INSERT INTO research (id, title, title_alternative, creator, subject, description, publisher, contributor, date, source, language, rights) VALUES(NULL ,"${createRS.title}", "${createRS.title_alternative}", "${createRS.creator}", "${createRS.subject}", "${createRS.description}", "${createRS.publisher}", "${createRS.contributor}", "${createRS.date}", "${createRS.source}", "${createRS.language}", "${createRS.rights}")`;
+
+   //    db.query(query);
+   // }
+   res.status(200).json({ token: decoded })
+   // res.status(200).json({ decode: decoded, fk: faker.lorem.paragraph() });
+
 }

@@ -3,11 +3,12 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
 const nodemailer = require("nodemailer");
+const tokenList = {};
 
 exports.signIn = (req, res) => {
   const { email, pass } = req.body;
   // console.log(req.body);
-  const query = `SELECT user_pass, isVerified FROM users WHERE user_email = "${email}"`;
+  const query = `SELECT * FROM users WHERE user_email = "${email}"`;
   db.query(query, async (err, data) => {
     // console.log(data);
     if (data.length > 0) {
@@ -21,21 +22,21 @@ exports.signIn = (req, res) => {
       // check password
       const isCorrect = await bcrypt.compare(pass, data[0].user_pass);
       if (isCorrect) {
-        jwt.decode
-        const token = jwt.sign(
-          {
-            userID: data[0].user_id, email: data[0].user_email
-          }
-          , dotenv.parsed.TOKEN_SECRET,
-          {
-            expiresIn: '100'
-          });
+        const user = { userId: data[0].user_id, email: data[0].user_email, role: data[0].role_id }
+        const token = jwt.sign(user, dotenv.parsed.TOKEN_SECRET, { expiresIn: '1h' });
+        const refreshToken = jwt.sign(user, dotenv.parsed.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
 
-        return res.status(200).json({
+        return res.cookie("access_token", refreshToken, {
+          httpOnly: true,
+          maxAge: 24 * 60 * 60 * 1000,
+          sameSite: 'None',
+          secure: process.env.NODE_ENV === "production",
+        }).status(200).json({
           status: "success",
           message: "Login successfully",
-          data: data[0],
+          data: data,
           token: token,
+          refreshToken: refreshToken,
         });
       } else {
         return res.status(401).json({
@@ -55,7 +56,8 @@ exports.signIn = (req, res) => {
 exports.signUp = async (req, res) => {
   const { fname, lname, email, pass } = req.body;
   const hashPass = await bcrypt.hash(pass, 10);
-  const query = `INSERT INTO users (user_fname,user_lname,user_email,user_pass,permission_id) VALUES ("${fname}","${lname}","${email}","${hashPass}",1)`;
+  const query = `INSERT INTO users (user_fname,user_lname,user_email,user_pass) VALUES ("${fname}","${lname}","${email}","${hashPass}")`;
+
   db.query(query, async (err, data) => {
     if (err) {
       res.status(400).json({ status: "fail", message: err });
@@ -65,7 +67,8 @@ exports.signUp = async (req, res) => {
     const tokenMail = jwt.sign({ mail: email },
       dotenv.parsed.TOKEN_SECRET, {
       expiresIn: '1h'
-    })
+    });
+
     const tranSporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -73,6 +76,7 @@ exports.signUp = async (req, res) => {
         pass: dotenv.parsed.PASS,
       },
     });
+
     const option = {
       from: `Verify your email < ${dotenv.parsed.EMAIL} >`,
       to: email,
@@ -121,7 +125,43 @@ exports.signUp = async (req, res) => {
           message: `Send verify to (${email}).`,
         });
       }
-    })
-    // res.status(200).json({ status: "success", message: "registered!!", data: data });
+    });
+    res.status(200).json({ status: "success", message: "registered!!", data: data });
   });
 };
+
+exports.signOut = async (req, res) => {
+  return res.status(200)
+    .clearCookie("access_token")
+    .json({ message: "Successfully sign out." });
+}
+
+exports.refreshToken = (req, res) => {
+  const user = req.body;
+  // const user = { userID: data[0].user_id, email: data[0].user_email, role: data[0].role_id };
+  if (req.cookies?.access_token) {
+    // Destructuring refreshToken from cookie
+    const refreshToken = req.cookies.access_token;
+    // Verifying refresh token
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET,
+      (err, decoded) => {
+        if (err) {
+          // Wrong Refesh Token
+          return res.status(406).json({ message: 'Unauthorized' });
+        } else {
+          // Correct token we send a new access token
+          console.log(decoded);
+          const token = jwt.sign({
+            userID: user.userId,
+            email: user.email,
+            role: user.roleId,
+          }, process.env.TOKEN_SECRET, {
+            expiresIn: '1h'
+          });
+          return res.status(200).json({ token: token, });
+        }
+      })
+  } else {
+    return res.status(406).json({ message: 'Unauthorized' });
+  }
+}

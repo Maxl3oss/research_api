@@ -3,7 +3,7 @@ const db = require('../database/conn');
 const dotenv = require('dotenv').config();
 
 exports.verifyEmail = async (req, res) => {
-   const email = jwt.decode(req.query.mail);
+   const email = jwt.verify(req.query.mail, dotenv.parsed.TOKEN_SECRET);
    console.log(email);
    if (email === null) {
       return res.status(400).send(`
