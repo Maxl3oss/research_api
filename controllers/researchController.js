@@ -28,6 +28,34 @@ exports.getAll = (req, res) => {
       })
    }
 }
+exports.getById = (req, res) => {
+   try {
+      const { id } = req.params;
+      const query = `SELECT * FROM research WHERE id=${id}`;
+
+      db.query(query, async (err, data) => {
+         if (data.length) {
+            return res.status(200).json({
+               status: true,
+               message: "Ok",
+               data: data,
+            });
+         } else {
+            return res.status(400).json({
+               status: false,
+               message: "Get Research Error",
+            });
+         }
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err,
+      });
+   }
+}
+
 
 exports.getLimit = (req, res) => {
    try {
@@ -72,7 +100,7 @@ exports.getLimit = (req, res) => {
          }
       })
    } catch (err) {
-      console.log(err);
+      // console.log(err);
       return res.status(500).json({
          status: false,
          message: "Server Error",

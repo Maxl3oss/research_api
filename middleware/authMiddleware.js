@@ -3,7 +3,7 @@ const dotenv = require('dotenv').config();
 
 const authenticateJWT = (req, res, next) => {
    const token = req.cookies.access_token;
-   // console.log(jwt.decode(token));
+   // console.log(token);
    if (token) {
       jwt.verify(token, dotenv.parsed.REFRESH_TOKEN_SECRET, (err, user) => {
          if (err) {
