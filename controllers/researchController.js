@@ -28,6 +28,7 @@ exports.getAll = (req, res) => {
       })
    }
 }
+
 exports.getById = (req, res) => {
    try {
       const { id } = req.params;

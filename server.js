@@ -3,8 +3,10 @@ const cors = require("cors");
 const authenticateJWT = require("./middleware/authMiddleware");
 const app = express();
 // router
-const userRouter = require("./routers/userRoute");
+const authRouter = require("./routers/authRoute");
+const usersRouter = require("./routers/usersRoute");
 const researchRouter = require("./routers/researchRoute");
+const backendRouter = require("./routers/backendRoute");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 
@@ -33,8 +35,10 @@ app.use(
   })
 );
 
-app.use("/api/user", userRouter);
+app.use("/api/user", authRouter);
+app.use("/api/users", usersRouter);
 app.use("/api/research", researchRouter);
+app.use("/api/backend", backendRouter);
 // app.use("/api", authenticateJWT, userRouter);
 
 app.listen(3000, () => {

@@ -22,7 +22,7 @@ exports.signIn = (req, res) => {
       // check password
       const isCorrect = await bcrypt.compare(pass, data[0].user_pass);
       if (isCorrect) {
-        const user = { userId: data[0].user_id, email: data[0].user_email, role: data[0].role_id }
+        const user = { userId: data[0].user_id, email: data[0].user_email };
         const token = jwt.sign(user, dotenv.parsed.TOKEN_SECRET, { expiresIn: '1h' });
         const refreshToken = jwt.sign(user, dotenv.parsed.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
 
@@ -137,31 +137,25 @@ exports.signOut = async (req, res) => {
 }
 
 exports.refreshToken = (req, res) => {
-  const user = req.body;
-  // const user = { userID: data[0].user_id, email: data[0].user_email, role: data[0].role_id };
   if (req.cookies?.access_token) {
     // Destructuring refreshToken from cookie
     const refreshToken = req.cookies.access_token;
     // Verifying refresh token
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET,
       (err, decoded) => {
-        if (err) {
-          // Wrong Refesh Token
-          return res.status(406).json({ message: 'Unauthorized' });
-        } else {
-          // Correct token we send a new access token
-          console.log(decoded);
-          const token = jwt.sign({
-            userID: user.userId,
-            email: user.email,
-            role: user.roleId,
-          }, process.env.TOKEN_SECRET, {
-            expiresIn: '1h'
-          });
-          return res.status(200).json({ token: token, });
-        }
+        // Wrong Refesh Token
+        if (err) return res.status(400).json({ message: err });
+        // Correct token we send a new access token
+        console.log(decoded);
+        const token = jwt.sign({
+          userID: decoded.userId,
+          email: decoded.email,
+        }, process.env.TOKEN_SECRET, {
+          expiresIn: '1h'
+        });
+        return res.status(200).json({ token: token, });
       })
   } else {
-    return res.status(406).json({ message: 'Unauthorized' });
+    return res.status(401).send("Token not found");
   }
 }
