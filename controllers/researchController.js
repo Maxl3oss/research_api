@@ -1,5 +1,6 @@
 const db = require("../database/conn");
 const jwt = require("jsonwebtoken");
+const path = require('path');
 const dotenv = require("dotenv").config();
 const { faker } = require("@faker-js/faker");
 
@@ -29,12 +30,48 @@ exports.getAll = (req, res) => {
    }
 }
 
+exports.getFileById = (req, res) => {
+   const { id } = req.params;
+   console.log(id);
+   try {
+      const query = `SELECT file_name FROM files WHERE file_id=${id}`;
+      db.query(query, async (err, data) => {
+         // console.log(__dirname, data[0].file_name);
+         if (data.length) {
+            res.download(path.join(__dirname + "/pdf", data[0].file_name), (err) => {
+               if (err) {
+                  return res.status(400).json({
+                     status: false,
+                     message: err,
+                  });
+               }
+               // console.log("OK");
+            })
+
+         } else {
+            return res.status(400).json({
+               status: false,
+               message: "Get File Error",
+            });
+         }
+      })
+   } catch (err) {
+      res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err,
+      })
+   }
+}
+
 exports.getById = (req, res) => {
    try {
       const { id } = req.params;
-      const query = `SELECT * FROM research WHERE id=${id}`;
+      // const query = `SELECT *,file_name FROM research INNER JOIN files ON research.id=${id}`;
+      const query = `(SELECT research.*, IF(research.file_id,files.file_name,NULL) AS file_name FROM research INNER JOIN files ON research.id=${id})`
 
       db.query(query, async (err, data) => {
+         console.log(__dirname + "/pdf/Exercise.pdf");
          if (data.length) {
             return res.status(200).json({
                status: true,
