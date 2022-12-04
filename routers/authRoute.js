@@ -8,7 +8,7 @@ router.post("/signIn", authController.signIn);
 router.post("/signUp", authController.signUp);
 router.post("/signOut", authenticateJWT, authController.signOut);
 
-router.post("/RfToken", authenticateJWT, authController.refreshToken);
+// router.post("/RfToken", authenticateJWT, authController.refreshToken);
 router.get("/verify-email", verifyController.verifyEmail);
 
 module.exports = router;

@@ -32,7 +32,7 @@ exports.getAll = (req, res) => {
 
 exports.getFileById = (req, res) => {
    const { id } = req.params;
-   console.log(id);
+   // console.log(id);
    try {
       const query = `SELECT file_name FROM files WHERE file_id=${id}`;
       db.query(query, async (err, data) => {
@@ -71,7 +71,7 @@ exports.getById = (req, res) => {
       const query = `(SELECT research.*, IF(research.file_id,files.file_name,NULL) AS file_name FROM research INNER JOIN files ON research.id=${id})`
 
       db.query(query, async (err, data) => {
-         console.log(__dirname + "/pdf/Exercise.pdf");
+         // console.log(__dirname + "/pdf/Exercise.pdf");
          if (data.length) {
             return res.status(200).json({
                status: true,

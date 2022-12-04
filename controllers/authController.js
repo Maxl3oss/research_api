@@ -23,10 +23,10 @@ exports.signIn = (req, res) => {
       const isCorrect = await bcrypt.compare(pass, data[0].user_pass);
       if (isCorrect) {
         const user = { userId: data[0].user_id, email: data[0].user_email };
-        const token = jwt.sign(user, dotenv.parsed.TOKEN_SECRET, { expiresIn: '1h' });
-        const refreshToken = jwt.sign(user, dotenv.parsed.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(user, dotenv.parsed.TOKEN_SECRET, { expiresIn: '1D' });
+        // const refreshToken = jwt.sign(user, dotenv.parsed.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
 
-        return res.cookie("access_token", refreshToken, {
+        return res.cookie("access_token", token, {
           httpOnly: true,
           maxAge: 24 * 60 * 60 * 1000,
           sameSite: 'None',
@@ -36,7 +36,7 @@ exports.signIn = (req, res) => {
           message: "Login successfully",
           data: data,
           token: token,
-          refreshToken: refreshToken,
+          // refreshToken: refreshToken,
         });
       } else {
         return res.status(401).json({
@@ -136,26 +136,26 @@ exports.signOut = async (req, res) => {
     .json({ message: "Successfully sign out." });
 }
 
-exports.refreshToken = (req, res) => {
-  if (req.cookies?.access_token) {
-    // Destructuring refreshToken from cookie
-    const refreshToken = req.cookies.access_token;
-    // Verifying refresh token
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET,
-      (err, decoded) => {
-        // Wrong Refesh Token
-        if (err) return res.status(400).json({ message: err });
-        // Correct token we send a new access token
-        console.log(decoded);
-        const token = jwt.sign({
-          userID: decoded.userId,
-          email: decoded.email,
-        }, process.env.TOKEN_SECRET, {
-          expiresIn: '1h'
-        });
-        return res.status(200).json({ token: token, });
-      })
-  } else {
-    return res.status(401).send("Token not found");
-  }
-}
+// exports.refreshToken = (req, res) => {
+//   if (req.cookies?.access_token) {
+//     // Destructuring refreshToken from cookie
+//     const refreshToken = req.cookies.access_token;
+//     // Verifying refresh token
+//     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET,
+//       (err, decoded) => {
+//         // Wrong Refresh Token
+//         if (err) return res.status(400).json({ message: err });
+//         // Correct token we send a new access token
+//         console.log(decoded);
+//         const token = jwt.sign({
+//           userID: decoded.userId,
+//           email: decoded.email,
+//         }, process.env.TOKEN_SECRET, {
+//           expiresIn: '1h'
+//         });
+//         return res.status(200).json({ token: token, });
+//       })
+//   } else {
+//     return res.status(401).send("Token not found");
+//   }
+// }
