@@ -106,7 +106,8 @@ exports.getLimit = (req, res) => {
 
       let query = `SELECT *,file_image AS image FROM research LEFT JOIN files ON research.file_id=files.file_id HAVING isVerified=1`;
       if (search && type === "all") {
-         query += ` WHERE title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%"`;
+         query = query.replace("HAVING isVerified=1", "");
+         query += ` WHERE title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%" AND isVerified=1`;
       } else {
          if (search && type) query += ` WHERE ${type} LIKE "%${search}%"`;
       }
@@ -150,29 +151,52 @@ exports.getLimit = (req, res) => {
 
 exports.post = (req, res) => {
    const files = req.files;
-   console.log(files);
-   const { title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
+   console.log(JSON.parse(req.body.info));
+   const { user_id, title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
    const query = `INSERT INTO files (file_pdf,file_image) VALUES ("${files[0].filename}","public/images/${files[1].filename}")`;
    db.query(query, async (err, result) => {
+      // insert files
+      const query = `INSERT INTO research (id, title, title_alternative, creator,  subject, description, publisher, contributor, date, source, rights, file_id)
+                     VALUES (NULL ,"${title}", "${title_alternative}", "${creator}",  "${subject}", "${description}", "${publisher}", "${contributor}", "${date}", "${source}", "${rights}", ${result.insertId})`
+      db.query(query, async (err, data) => {
+         // insert research
+         // console.log(data);
+         const query = `INSERT INTO users_research(user_id, research_id) VALUES (${user_id},${data.insertId})`
+         db.query(query, async (err, info) => {
+            // insert users_research
+            if (err) {
+               return res.status(505).json({
+                  message: "Server Error",
+                  data: err,
+               });
+            }
+            return res.status(200).json({
+               status: true,
+               message: "Ok",
+               data: info,
+            });
+         });
+      });
+      // console.log(result.insertId);
+   })
+}
+
+exports.getResearchByUser = (req, res) => {
+   const { id } = req.params;
+   const query = `SELECT research.id,research.title,research.creator,research.date,research.isVerified,files.file_image AS image FROM users_research INNER JOIN research ON users_research.research_id=research.id AND users_research.user_id=${id} LEFT JOIN files ON files.file_id=research.file_id`
+   db.query(query, async (err, data) => {
       if (err) {
          return res.status(505).json({
-            status: false,
             message: "Server Error",
             data: err,
          });
       }
-      const query = `INSERT INTO research (id, title, title_alternative, creator,  subject, description, publisher, contributor, date, source, rights, file_id)
-                     VALUES (NULL ,"${title}", "${title_alternative}", "${creator}",  "${subject}", "${description}", "${publisher}", "${contributor}", "${date}", "${source}", "${rights}", ${result.insertId})`
-      db.query(query, async (err, data) => {
-         if (err) {
-            return res.status(400).json({
-               data: err
-            });
-         }
-         return res.status(200).json({
-            data: data
-         });
+      res.status(200).json({
+         status: true,
+         message: "Ok",
+         data: data,
       })
-      // console.log(result.insertId);
    })
 }
+// get research on user id
+// SELECT research.* FROM `users_research` INNER JOIN research ON users_research.research_id=research.id AND users_research.user_id = 94

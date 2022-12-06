@@ -26,5 +26,6 @@ router.get("/get", researchController.getLimit);
 router.get("/get/:id", researchController.getById);
 router.post("/post", upload.any(), authenticateJWT, researchController.post);
 router.get("/file/:id/download", authenticateJWT, researchController.getFileById);
+router.get("/myResearch/:id", authenticateJWT, researchController.getResearchByUser);
 
 module.exports = router;
