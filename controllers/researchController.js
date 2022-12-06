@@ -1,6 +1,6 @@
 const db = require("../database/conn");
 const jwt = require("jsonwebtoken");
-const path = require('path');
+const path = require("path");
 const dotenv = require("dotenv").config();
 const { faker } = require("@faker-js/faker");
 
@@ -34,11 +34,12 @@ exports.getFileById = (req, res) => {
    const { id } = req.params;
    // console.log(id);
    try {
-      const query = `SELECT file_name FROM files WHERE file_id=${id}`;
+      const query = `SELECT file_pdf FROM files WHERE file_id=${id}`;
       db.query(query, async (err, data) => {
-         // console.log(__dirname, data[0].file_name);
+         // console.log(path.join(__dirname, '../uploads/pdf/') + data[0].file_pdf);
+         // path.join(__dirname, '../uploads/') + file.fieldname
          if (data.length) {
-            res.download(path.join(__dirname + "/pdf", data[0].file_name), (err) => {
+            res.download(path.join(__dirname, '../uploads/pdf', data[0].file_pdf), (err) => {
                if (err) {
                   return res.status(400).json({
                      status: false,
@@ -68,7 +69,7 @@ exports.getById = (req, res) => {
    try {
       const { id } = req.params;
       // const query = `SELECT *,file_name FROM research INNER JOIN files ON research.id=${id}`;
-      const query = `(SELECT research.*, IF(research.file_id,files.file_name,NULL) AS file_name FROM research INNER JOIN files ON research.id=${id})`
+      const query = `SELECT research.*,files.file_image AS image,files.file_pdf FROM research LEFT JOIN files ON research.file_id=files.file_id WHERE research.id=${id} HAVING isVerified=1`
 
       db.query(query, async (err, data) => {
          // console.log(__dirname + "/pdf/Exercise.pdf");
@@ -103,7 +104,7 @@ exports.getLimit = (req, res) => {
       const type = req.query.type;
       const search = req.query.search;
 
-      let query = `SELECT * FROM research`;
+      let query = `SELECT *,file_image AS image FROM research LEFT JOIN files ON research.file_id=files.file_id HAVING isVerified=1`;
       if (search && type === "all") {
          query += ` WHERE title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%"`;
       } else {
@@ -113,7 +114,7 @@ exports.getLimit = (req, res) => {
       // console.log(query);
 
       db.query(query, async (err, data) => {
-         const qtyCount = query.replace("*", "COUNT(id)").split(" ").slice(0, -2).join(" ");
+         const qtyCount = query.replace("*", "COUNT(id)").replace("HAVING isVerified=1", "").split(" ").slice(0, -2).join(" ");
          // console.log(qtyCount);
          if (data.length) {
             //count data research
@@ -143,33 +144,35 @@ exports.getLimit = (req, res) => {
          status: false,
          message: "Server Error",
          data: err,
-      })
+      });
    }
 }
 
 exports.post = (req, res) => {
-   const token = req.headers.authorization.split(" ")[1];
-   let decoded = jwt.verify(token, dotenv.parsed.TOKEN_SECRET);
-   console.log(token);
-   // for (i = 0; i <= 100; i++) {
-   //    const createRS = {
-   //       title: faker.commerce.product(),
-   //       title_alternative: faker.company.name(),
-   //       creator: faker.internet.userName(),
-   //       subject: faker.animal.cat(),
-   //       description: faker.lorem.paragraph(),
-   //       publisher: faker.internet.userName(),
-   //       contributor: faker.internet.userName(),
-   //       date: new Date().toISOString().slice(0, 19).replace('T', ' '),
-   //       source: faker.internet.userName(),
-   //       language: "tha",
-   //       rights: faker.internet.userName()
-   //    }
-   //    const query = `INSERT INTO research (id, title, title_alternative, creator, subject, description, publisher, contributor, date, source, language, rights) VALUES(NULL ,"${createRS.title}", "${createRS.title_alternative}", "${createRS.creator}", "${createRS.subject}", "${createRS.description}", "${createRS.publisher}", "${createRS.contributor}", "${createRS.date}", "${createRS.source}", "${createRS.language}", "${createRS.rights}")`;
-
-   //    db.query(query);
-   // }
-   res.status(200).json({ token: decoded })
-   // res.status(200).json({ decode: decoded, fk: faker.lorem.paragraph() });
-
+   const files = req.files;
+   console.log(files);
+   const { title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
+   const query = `INSERT INTO files (file_pdf,file_image) VALUES ("${files[0].filename}","public/images/${files[1].filename}")`;
+   db.query(query, async (err, result) => {
+      if (err) {
+         return res.status(505).json({
+            status: false,
+            message: "Server Error",
+            data: err,
+         });
+      }
+      const query = `INSERT INTO research (id, title, title_alternative, creator,  subject, description, publisher, contributor, date, source, rights, file_id)
+                     VALUES (NULL ,"${title}", "${title_alternative}", "${creator}",  "${subject}", "${description}", "${publisher}", "${contributor}", "${date}", "${source}", "${rights}", ${result.insertId})`
+      db.query(query, async (err, data) => {
+         if (err) {
+            return res.status(400).json({
+               data: err
+            });
+         }
+         return res.status(200).json({
+            data: data
+         });
+      })
+      // console.log(result.insertId);
+   })
 }
