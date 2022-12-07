@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
    filename: function (req, file, cb) {
       cb(null, Date.now() + '-' + file.originalname)
    }
-})
+});
 const upload = multer({
    storage: storage,
    limits: {
@@ -27,5 +27,6 @@ router.get("/get/:id", researchController.getById);
 router.post("/post", upload.any(), authenticateJWT, researchController.post);
 router.get("/file/:id/download", authenticateJWT, researchController.getFileById);
 router.get("/myResearch/:id", authenticateJWT, researchController.getResearchByUser);
+router.post("/del", authenticateJWT, researchController.delResearchByUser);
 
 module.exports = router;
