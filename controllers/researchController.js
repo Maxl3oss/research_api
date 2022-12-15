@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const dotenv = require("dotenv").config();
 const { faker } = require("@faker-js/faker");
+const fs = require("fs");
 
 exports.getAll = (req, res) => {
    try {
@@ -207,20 +208,6 @@ exports.post = (req, res) => {
    }
 }
 
-exports.updateResearch = (req, res) => {
-   const files = req.files;
-   if (!files.length > 0) {
-      console.log(req.body.pdf);
-   }
-   // console.log(JSON.parse(req.body.info));
-   const { user_id, title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
-   console.log(req.body.info);
-   return res.status(200).json({
-      status: true,
-      message: "Ok"
-   })
-}
-
 exports.getResearchByUser = (req, res) => {
    try {
       const { id } = req.params;
@@ -267,19 +254,121 @@ exports.getResearchByUser = (req, res) => {
    }
 }
 
+exports.updateResearch = (req, res) => {
+   try {
+      const { file_id, user_id, title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
+      // delete image in directory
+      const queryFiles = `SELECT file_pdf, file_image FROM files WHERE file_id=${file_id}`;
+      db.query(queryFiles, (err, data) => {
+         // console.log(data[0].pdf);
+         // console.log(data[0].image);
+         let { file_pdf, file_image } = data[0];
+         if (err) {
+            return res.status(505).json({
+               message: "Server Error",
+               data: err,
+            });
+         }
+         // update image 
+         const files = req.files;
+         let query = `UPDATE files SET `;
+         console.log(files.length);
+         if (files.length >= 0) {
+            files.map((e, i) => {
+               if (i > 0) query += `, `;
+               if (files[i].fieldname === "images") {
+                  console.log("images -> " + files[i].path);
+                  query += `file_image="public/images/${files[i].filename}"`;
+                  // delete image 
+                  file_image = file_image.replace("public/", "");
+                  fs.unlink(path.join(__dirname, '../uploads/') + file_image, (err) => {
+                     if (err) {
+                        throw err;
+                     }
+                     console.log(`Delete File(${file_image}) successfully.`);
+                  });
+               }
+               if (files[i].fieldname === "pdf") {
+                  console.log("pdf -> " + files[i].path);
+                  query += `file_pdf="${files[i].filename}"`;
+                  // delete pdf
+                  fs.unlink(path.join(__dirname, '../uploads/pdf/') + file_pdf, (err) => {
+                     if (err) {
+                        throw err;
+                     }
+                     console.log(`Delete File(${file_pdf}) successfully.`);
+                  });
+               }
+            });
+         }
+         query += ` WHERE file_id=${file_id}`;
+         console.log(query);
+         db.query(query, (err, result) => {
+            console.log(result);
+         })
+      });
+
+      // update data in from
+      // console.log(JSON.parse(req.body.info));
+      console.log(req.body.info);
+      return res.status(200).json({
+         status: true,
+         message: "Ok"
+      });
+   } catch (err) {
+      // console.log(err);
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err
+      });
+   }
+}
+
 exports.delResearchByUser = (req, res) => {
    try {
       const { user_id, research_id } = req.body;
-      const query = `DELETE research, files, users_research FROM research INNER JOIN files ON research.file_id=files.file_id INNER JOIN users_research ON research.id=users_research.research_id AND users_research.user_id=${user_id} WHERE research.id=${research_id}`
-      // console.log(query);
-      db.query(query, (err, data) => {
-         // console.log(data);
+      const queryFiles = `SELECT files.file_pdf,files.file_image FROM research INNER JOIN files ON research.file_id=files.file_id AND research.id=${research_id}`;
+      db.query(queryFiles, (err, data) => {
+         const query = `DELETE research, files, users_research FROM research INNER JOIN files ON research.file_id=files.file_id INNER JOIN users_research ON research.id=users_research.research_id AND users_research.user_id=${user_id} WHERE research.id=${research_id}`
          // console.log(err);
-         return res.status(200).json({
-            status: true,
-            message: "Ok"
+         if (err) {
+            return res.status(500).json({
+               status: false,
+               message: "Server Error",
+               data: err
+            });
+         }
+         db.query(query, (err, result) => {
+            if (err) {
+               return res.status(500).json({
+                  status: false,
+                  message: "Server Error",
+                  data: err
+               });
+            }
+            // delete image in directory
+            let { file_pdf, file_image } = data[0];
+            file_image = file_image.replace("public/", "");
+            fs.unlink(path.join(__dirname, '../uploads/') + file_image, (err) => {
+               if (err) {
+                  throw err;
+               }
+               console.log(`Delete File(${file_image}) successfully.`);
+            });
+            fs.unlink(path.join(__dirname, '../uploads/pdf/') + file_pdf, (err) => {
+               if (err) {
+                  throw err;
+               }
+               console.log(`Delete File(${file_pdf}) successfully.`);
+            });
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
          });
-      });
+      })
+
    } catch (err) {
       // console.log(err);
       return res.status(500).json({
