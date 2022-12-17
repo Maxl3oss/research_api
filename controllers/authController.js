@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
 const nodemailer = require("nodemailer");
-const tokenList = {};
 
 exports.signIn = (req, res) => {
   const { email, pass } = req.body;

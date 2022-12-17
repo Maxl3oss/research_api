@@ -128,9 +128,8 @@ exports.getLimit = (req, res) => {
          data?.length ? data : data = [];
          if (data.length) {
             //count data research
-            // console.log(qtyCount);
             db.query(qtyCount, (err, result) => {
-               const total = result[0]['COUNT(id)'];
+               const total = result[0]['count(id)'];
                return res.status(200).json({
                   status: "success",
                   page: page,
@@ -229,7 +228,7 @@ exports.getResearchByUser = (req, res) => {
          db.query(qtyCount, (err, result) => {
             data?.length ? data : data = [];
             if (data.length) {
-               const total = result[0]['COUNT(id)'];
+               const total = result[0]['count(id)'];
                // console.log(result);
                return res.status(200).json({
                   status: "success",
