@@ -1,4 +1,5 @@
-const mysql = require("mysql");
+const mysql = require("mysql2");
+const dotenv = require("dotenv").config();
 
 const db = mysql.createConnection({
   host: "172.17.0.1",
@@ -6,6 +7,7 @@ const db = mysql.createConnection({
   password: "bPFcM0jB7jnH5ZYN",
   database: "project_research",
 });
+// const db = mysql.createConnection(dotenv.parsed.DATABASE_URL);
 
 db.connect((err) => {
   if (err) {

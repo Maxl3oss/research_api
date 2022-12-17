@@ -9,6 +9,7 @@ exports.getAll = (req, res) => {
    try {
       const query = `SELECT * FROM research LIMIT 2,4`;
       db.query(query, (err, data) => {
+         data?.length ? data : data = [];
          if (data.length) {
             return res.status(200).json({
                status: true,
@@ -39,6 +40,7 @@ exports.getFileById = (req, res) => {
       db.query(query, async (err, data) => {
          // console.log(path.join(__dirname, '../uploads/pdf/') + data[0].file_pdf);
          // path.join(__dirname, '../uploads/') + file.fieldname
+         data?.length ? data : data = [];
          if (data.length) {
             return res.download(path.join(__dirname, '../uploads/pdf', data[0].file_pdf), (err) => {
                if (err) {
@@ -74,6 +76,7 @@ exports.getById = (req, res) => {
 
       db.query(query, (err, data) => {
          // console.log(__dirname + "/pdf/Exercise.pdf");
+         data?.length ? data : data = [];
          if (data.length) {
             return res.status(200).json({
                status: true,
@@ -113,18 +116,19 @@ exports.getLimit = (req, res) => {
                   HAVING research.isVerified=1`
       if (search && type === "all") {
          query = query.replace("HAVING isVerified=1", "");
-         query += ` WHERE title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%" AND isVerified=1`;
+         query += ` AND title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%" AND isVerified=1`;
       } else {
-         if (search && type) query += ` WHERE ${type} LIKE "%${search}%"`;
+         if (search && type) query += ` AND ${type} LIKE "%${search}%"`;
       }
       query += ` LIMIT ${start_idx},${per_page}`;
       // console.log(query);
 
       db.query(query, (err, data) => {
-         const qtyCount = query.replace("research.*, file_image AS image, CONCAT(users.user_fname ,' ', users.user_lname) AS user_name", "COUNT(id)").replace("HAVING research.isVerified=1", "AND research.isVerified=1").split(" ").slice(0, -2).join(" ");
-         // console.log(qtyCount);
+         const qtyCount = query.replace("research.*, file_image AS image, CONCAT(users.user_fname ,' ', users.user_lname) AS user_name", "COUNT(id)").replace("HAVING research.isVerified=1", "AND research.isVerified=1").replace("AND isVerified=1", "").split(" ").slice(0, -2).join(" ");
+         data?.length ? data : data = [];
          if (data.length) {
             //count data research
+            // console.log(qtyCount);
             db.query(qtyCount, (err, result) => {
                const total = result[0]['COUNT(id)'];
                return res.status(200).json({
@@ -223,9 +227,10 @@ exports.getResearchByUser = (req, res) => {
          const qtyCount = query.replace("research.id, research.title, research.creator, research.date, research.isVerified, files.file_image AS image", "COUNT(id)").split(" ").slice(0, -2).join(" ");
          // console.log(qtyCount);
          db.query(qtyCount, (err, result) => {
+            data?.length ? data : data = [];
             if (data.length) {
                const total = result[0]['COUNT(id)'];
-               // console.log(total);
+               // console.log(result);
                return res.status(200).json({
                   status: "success",
                   page: page,
@@ -256,12 +261,10 @@ exports.getResearchByUser = (req, res) => {
 
 exports.updateResearch = (req, res) => {
    try {
-      const { file_id, user_id, title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
+      const { file_id, research_id, user_id, title, title_alternative, creator, subject, publisher, contributor, source, rights, description } = JSON.parse(req.body.info);
       // delete image in directory
       const queryFiles = `SELECT file_pdf, file_image FROM files WHERE file_id=${file_id}`;
       db.query(queryFiles, (err, data) => {
-         // console.log(data[0].pdf);
-         // console.log(data[0].image);
          let { file_pdf, file_image } = data[0];
          if (err) {
             return res.status(505).json({
@@ -272,7 +275,7 @@ exports.updateResearch = (req, res) => {
          // update image 
          const files = req.files;
          let query = `UPDATE files SET `;
-         console.log(files.length);
+         // console.log(files.length);
          if (files.length >= 0) {
             files.map((e, i) => {
                if (i > 0) query += `, `;
@@ -302,18 +305,34 @@ exports.updateResearch = (req, res) => {
             });
          }
          query += ` WHERE file_id=${file_id}`;
-         console.log(query);
-         db.query(query, (err, result) => {
-            console.log(result);
+         // console.log(query);
+         // if have image and pdf update
+         if (files.length > 0) {
+            db.query(query, (err, result) => {
+               // console.log(result);
+               if (err) {
+                  return res.status(505).json({
+                     message: "Server Error",
+                     data: err,
+                  });
+               }
+            })
+         }
+         // update data in from
+         // console.log(req.body.info);
+         const queryInfo = `UPDATE research SET title='${title}',title_alternative='${title_alternative}',creator='${creator}',subject='${subject}',publisher='${publisher}', contributor='${contributor}',source='${source}',rights='${rights}',description='${description}' WHERE id=${research_id}`;
+         db.query(queryInfo, (err, info) => {
+            if (err) {
+               return res.status(505).json({
+                  message: "Server Error",
+                  data: err,
+               });
+            }
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
          })
-      });
-
-      // update data in from
-      // console.log(JSON.parse(req.body.info));
-      console.log(req.body.info);
-      return res.status(200).json({
-         status: true,
-         message: "Ok"
       });
    } catch (err) {
       // console.log(err);
