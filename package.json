@@ -15,7 +15,8 @@
     "nodemon": "^2.0.20"
   },
   "scripts": {
-    "dev": "nodemon -L server.js"
+    "dev": "nodemon -L server.js",
+    "start" : "node server.js"
   },
   "name": "api-sometime",
   "version": "1.0.0",

@@ -305,10 +305,10 @@ exports.updateResearch = (req, res) => {
             });
          }
          query += ` WHERE file_id=${file_id}`;
-         // console.log(query);
          // if have image and pdf update
          if (files.length > 0) {
             db.query(query, (err, result) => {
+               // console.log(query);
                // console.log(result);
                if (err) {
                   return res.status(505).json({
