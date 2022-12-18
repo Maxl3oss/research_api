@@ -2,6 +2,7 @@ const db = require("../database/conn");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
 const nodemailer = require("nodemailer");
+require('dotenv').config();
 
 exports.signIn = (req, res) => {
   const { email, pass } = req.body;

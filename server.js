@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const authenticateJWT = require("./middleware/authMiddleware");
 const app = express();
+require('dotenv').config();
 // router
 const authRouter = require("./routers/authRoute");
 const usersRouter = require("./routers/usersRoute");

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const db = require("../database/conn");
+require('dotenv').config();
 
 exports.authenticateJWT = (req, res, next) => {
    let token = "";
