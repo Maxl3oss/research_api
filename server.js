@@ -9,7 +9,9 @@ const researchRouter = require("./routers/researchRoute");
 const backendRouter = require("./routers/backendRoute");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
-
+// port
+const dotenv = require("dotenv").config();
+const PORT = dotenv.parsed.PORT || 3000;
 
 app.enable("trust proxy");
 // allowed cors *
@@ -34,8 +36,11 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/research", researchRouter);
 app.use("/api/backend", backendRouter);
+app.get("/", (req, res) => {
+  res.send("IS RUNNING");
+})
 // app.use("/api", authenticateJWT, userRouter);
 
-app.listen(3000, () => {
-  console.log(`listening on port 3000 `);
+app.listen(PORT, () => {
+  console.log(`listening on port ${PORT}`);
 });

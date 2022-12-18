@@ -1,8 +1,5 @@
 const db = require("../database/conn");
-const jwt = require("jsonwebtoken");
 const path = require("path");
-const dotenv = require("dotenv").config();
-const { faker } = require("@faker-js/faker");
 const fs = require("fs");
 
 exports.getAll = (req, res) => {
