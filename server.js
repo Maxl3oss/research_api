@@ -10,7 +10,7 @@ const backendRouter = require("./routers/backendRoute");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 // port
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.enable("trust proxy");
 // allowed cors *
