@@ -1,7 +1,6 @@
 const db = require("../database/conn");
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv').config();
 const nodemailer = require("nodemailer");
 
 exports.signIn = (req, res) => {
@@ -22,8 +21,8 @@ exports.signIn = (req, res) => {
       const isCorrect = await bcrypt.compare(pass, data[0].user_pass);
       if (isCorrect) {
         const user = { userId: data[0].user_id, email: data[0].user_email };
-        const token = jwt.sign(user, dotenv.parsed.TOKEN_SECRET, { expiresIn: '1D' });
-        // const refreshToken = jwt.sign(user, dotenv.parsed.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1D' });
+        // const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
         delete data[0]['user_pass'];
         // console.log(data);
         return res.cookie("access_token", token, {
@@ -65,20 +64,20 @@ exports.signUp = async (req, res) => {
     }
     //send verify email
     const tokenMail = jwt.sign({ mail: email },
-      dotenv.parsed.TOKEN_SECRET, {
+      process.env.TOKEN_SECRET, {
       expiresIn: '1h'
     });
 
     const tranSporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: dotenv.parsed.EMAIL,
-        pass: dotenv.parsed.PASS,
+        user: process.env.EMAIL,
+        pass: process.env.PASS,
       },
     });
 
     const option = {
-      from: `Verify your email < ${dotenv.parsed.EMAIL} >`,
+      from: `Verify your email < ${process.env.EMAIL} >`,
       to: email,
       subject: "Research - verify your email",
       html: `<div class="center" style="color: #fff; background-color: #222; font-family:courier; width: 100%; text-align:center; ">
@@ -100,7 +99,7 @@ exports.signUp = async (req, res) => {
                                 overflow: hidden;
                                 padding: 15px 15px 15px;
                                 text-decoration: none;
-                                " href="http://${dotenv.parsed.HOST}:${dotenv.parsed.PORT}/api/user/verify-email?mail=${tokenMail}">
+                                " href="http://${process.env.HOST}:${process.env.PORT}/api/user/verify-email?mail=${tokenMail}">
                     Verify Your Email
                 </a>
             </div>

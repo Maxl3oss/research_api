@@ -1,10 +1,9 @@
 const jwt = require('jsonwebtoken');
 const db = require('../database/conn');
-const dotenv = require('dotenv').config();
 
 exports.verifyEmail = async (req, res) => {
    try {
-      const email = jwt.verify(req.query.mail, dotenv.parsed.TOKEN_SECRET);
+      const email = jwt.verify(req.query.mail, process.env.TOKEN_SECRET);
       console.log(email);
       if (email === null) {
          return res.status(400).send(`
@@ -51,7 +50,7 @@ exports.verifyEmail = async (req, res) => {
                overflow: hidden;
                padding: 15px 15px 15px;
                text-decoration: none;
-               " href="http://${dotenv.parsed.HOST}:${dotenv.parsed.PORT}/signIn">
+               " href="http://${process.env.HOST}:${process.env.PORT}/signIn">
                   Sing In
                </a>
          </body>
