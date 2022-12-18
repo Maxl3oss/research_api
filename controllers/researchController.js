@@ -358,6 +358,7 @@ exports.delResearchByUser = (req, res) => {
             });
          }
          db.query(query, (err, result) => {
+            // console.log(err);
             if (err) {
                return res.status(500).json({
                   status: false,

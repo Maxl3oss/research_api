@@ -24,7 +24,8 @@ exports.signIn = (req, res) => {
         const user = { userId: data[0].user_id, email: data[0].user_email };
         const token = jwt.sign(user, dotenv.parsed.TOKEN_SECRET, { expiresIn: '1D' });
         // const refreshToken = jwt.sign(user, dotenv.parsed.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
-
+        delete data[0]['user_pass'];
+        // console.log(data);
         return res.cookie("access_token", token, {
           httpOnly: true,
           maxAge: 24 * 60 * 60 * 1000,

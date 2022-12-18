@@ -30,7 +30,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use("/api/public", express.static(__dirname + '/uploads'));
 
 // api
-app.use("/api/user", authRouter);
+app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/research", researchRouter);
 app.use("/api/backend", backendRouter);
