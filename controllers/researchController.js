@@ -1,4 +1,5 @@
 const db = require("../database/conn");
+const cloud = require("../database/cloud");
 const path = require("path");
 const fs = require("fs");
 
@@ -28,6 +29,7 @@ exports.getAll = (req, res) => {
       })
    }
 }
+
 
 exports.getFileById = (req, res) => {
    try {
@@ -155,22 +157,42 @@ exports.getLimit = (req, res) => {
    }
 }
 
-exports.post = (req, res) => {
+
+exports.post = async (req, res) => {
    try {
-      const files = req.files;
+      // upload file 
+      let image_url, pdf_url;
+      const uploadFiles = async () => {
+         if (req.body.images) {
+            await cloud.uploadImage(req.body.images)
+               .then((url) => image_url = url)
+               .catch((err) => res.status(500).send(err));
+         }
+         if (req.body.pdf) {
+            await cloud.uploadPDF(req.body.pdf)
+               .then((url) => pdf_url = url)
+               .catch((err) => res.status(500).send(err));
+         }
+      }
+      await uploadFiles();
       // console.log(JSON.parse(req.body.info));
       const { user_id, title, title_alternative, creator, subject, publisher, contributor, date, source, rights, description } = JSON.parse(req.body.info);
-      const query = `INSERT INTO files (file_pdf,file_image) VALUES ("${files[0].filename}","public/images/${files[1].filename}")`;
+      const query = `INSERT INTO files (file_pdf,file_image) VALUES ("${pdf_url}","${image_url}")`;
       db.query(query, (err, result) => {
          // insert files
+         if (err) {
+            return res.status(505).json({
+               message: "insert files",
+               data: err,
+            });
+         }
          const query = `INSERT INTO research (id, title, title_alternative, creator,  subject, description, publisher, contributor, date, source, rights, file_id)
                         VALUES (NULL ,"${title}", "${title_alternative}", "${creator}",  "${subject}", "${description}", "${publisher}", "${contributor}", "${date}", "${source}", "${rights}", ${result.insertId})`
          db.query(query, (err, data) => {
             // insert research
-            // console.log(data);
             if (err) {
                return res.status(505).json({
-                  message: "Server Error",
+                  message: "errors insert research",
                   data: err,
                });
             }
@@ -179,7 +201,7 @@ exports.post = (req, res) => {
                // insert users_research
                if (err) {
                   return res.status(505).json({
-                     message: "Server Error",
+                     message: "Errors insert users_research",
                      data: err,
                   });
                }
@@ -190,16 +212,9 @@ exports.post = (req, res) => {
                });
             });
          });
-         if (err) {
-            return res.status(505).json({
-               message: "Server Error",
-               data: err,
-            });
-         }
          // console.log(result.insertId);
       })
    } catch (err) {
-      console.log(err);
       return res.status(500).json({
          status: false,
          message: "Server Error",
@@ -363,28 +378,18 @@ exports.delResearchByUser = (req, res) => {
                   data: err
                });
             }
-            // delete image in directory
+            // delete image in cloudinary
             let { file_pdf, file_image } = data[0];
-            file_image = file_image.replace("public/", "");
-            fs.unlink(path.join(__dirname, '../uploads/') + file_image, (err) => {
-               if (err) {
-                  throw err;
-               }
-               console.log(`Delete File(${file_image}) successfully.`);
-            });
-            fs.unlink(path.join(__dirname, '../uploads/pdf/') + file_pdf, (err) => {
-               if (err) {
-                  throw err;
-               }
-               console.log(`Delete File(${file_pdf}) successfully.`);
-            });
+            cloud.delete(file_pdf);
+            cloud.delete(file_image);
+
+            console.log(file_image, file_image);
             return res.status(200).json({
                status: true,
                message: "Ok"
             });
          });
       })
-
    } catch (err) {
       // console.log(err);
       return res.status(500).json({
@@ -394,7 +399,3 @@ exports.delResearchByUser = (req, res) => {
       });
    }
 }
-
-
-// get research on user id
-// SELECT research.* FROM `users_research` INNER JOIN research ON users_research.research_id=research.id AND users_research.user_id = 94
