@@ -5,7 +5,14 @@ const fs = require("fs");
 
 exports.getAll = (req, res) => {
    try {
-      const query = `SELECT * FROM research LIMIT 2,4`;
+      // const query = `SELECT * FROM research LIMIT 0,10`;
+      const query = `
+      SELECT research.id, research.title, research.date, research.isVerified, users.user_fname, users.user_lname FROM research
+      LEFT JOIN users_research ON users_research.research_id=research.id
+      LEFT JOIN users ON users.user_id=users_research.user_id 
+      LIMIT 0,10
+      `;
+      // console.log(query);
       db.query(query, (err, data) => {
          data?.length ? data : data = [];
          if (data.length) {
@@ -14,7 +21,8 @@ exports.getAll = (req, res) => {
                message: "Ok",
                data: data,
             });
-         } else {
+         }
+         if (err) {
             return res.status(400).json({
                status: false,
                message: "Get Research Error",

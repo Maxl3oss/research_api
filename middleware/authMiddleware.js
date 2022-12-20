@@ -19,7 +19,8 @@ exports.authenticateJWT = (req, res, next) => {
 };
 
 exports.isAdmin = (req, res, next) => {
-   const token = req.cookies.access_token;
+   let token = "";
+   req.cookies.access_token ? token = req.cookies.access_token : token = req.headers.authorization;
    const { userId, email } = jwt.verify(token, process.env.TOKEN_SECRET);
    // SELECT roles.name FROM `users` INNER JOIN roles ON id=users.role_id AND users.user_id=92 AND users.user_email = "maxl3oss10@gmail.com"
    const query = `SELECT roles.name FROM users INNER JOIN roles ON id=users.role_id AND users.user_id=${userId} AND users.user_email = "${email}"`;
@@ -33,7 +34,7 @@ exports.isAdmin = (req, res, next) => {
          }
          next();
       }
+      // console.log("Use Role Admin -> " + userId, email, data[0].name);
    });
-   console.log(userId, email);
 }
 
