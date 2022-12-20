@@ -10,6 +10,7 @@ exports.signIn = (req, res) => {
   const query = `SELECT * FROM users WHERE user_email = "${email}"`;
   db.query(query, async (err, data) => {
     // console.log(data);
+    data?.length ? data : data = [];
     if (data.length > 0) {
       // if not verify email
       if (data[0].isVerified === 0) {
