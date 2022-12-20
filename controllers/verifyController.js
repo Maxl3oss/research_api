@@ -51,7 +51,7 @@ exports.verifyEmail = async (req, res) => {
                overflow: hidden;
                padding: 15px 15px 15px;
                text-decoration: none;
-               " href="http://${process.env.HOST}:${process.env.PORT}/signIn">
+               " href="${process.env.HOSTWEB}/signIn">
                   Sing In
                </a>
          </body>

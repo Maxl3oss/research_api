@@ -100,7 +100,7 @@ exports.signUp = async (req, res) => {
                                 overflow: hidden;
                                 padding: 15px 15px 15px;
                                 text-decoration: none;
-                                " href="${process.env.HOST}/api/user/verify-email?mail=${tokenMail}">
+                                " href="${process.env.HOSTWEB}/api/auth/verify-email?mail=${tokenMail}">
                     Verify Your Email
                 </a>
             </div>
