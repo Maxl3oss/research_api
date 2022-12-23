@@ -4,7 +4,7 @@ const researchController = require("../controllers/researchController");
 const { authenticateJWT, isAdmin } = require("../middleware/authMiddleware")
 const router = express.Router();
 
-router.get("/get", authenticateJWT, isAdmin, dashboardController.get);
+router.get("/dashboard", authenticateJWT, isAdmin, dashboardController.get);
 router.get("/getResearch", authenticateJWT, isAdmin, researchController.getAll);
 
 module.exports = router;

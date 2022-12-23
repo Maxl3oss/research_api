@@ -37,7 +37,8 @@ exports.editByUser = async (req, res) => {
          const hashPass = await bcrypt.hash(user_pass, 10);
          query += `, user_pass="${hashPass}" `;
       }
-      query += `WHERE ${user_id}`;
+      query += `WHERE user_id=${user_id}`;
+
       // console.log(query);
       db.query(query, (err, data) => {
          if (err) {

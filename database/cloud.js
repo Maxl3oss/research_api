@@ -54,6 +54,7 @@ exports.delete = (url) => {
          console.log("delete err -> " + err);
          return
       }
+      console.log(JSON.stringify(result));
       console.log("delete result -> " + result);
    })
 } 

@@ -38,7 +38,6 @@ exports.getAll = (req, res) => {
    }
 }
 
-
 exports.getFileById = (req, res) => {
    try {
       const { id } = req.params;
@@ -278,6 +277,83 @@ exports.getResearchByUser = (req, res) => {
    }
 }
 
+exports.updateResearchCloud = async (req, res) => {
+   try {
+      const { file_id, research_id, user_id, title, title_alternative, creator, subject, publisher, contributor, source, rights, description } = JSON.parse(req.body.info);
+      const queryFiles = `SELECT file_pdf, file_image FROM files WHERE file_id=${file_id}`;
+      // get 
+      db.query(queryFiles, async (err, data) => {
+         let { file_pdf, file_image } = data[0];
+         if (err) {
+            return res.status(505).json({
+               message: "Server Error",
+               data: err,
+            });
+         }
+         // update image 
+         let image_url, pdf_url;
+         let query = `UPDATE files SET `;
+         const uploadFiles = async () => {
+            if (req.body.images.length > 300) {
+               // delete
+               cloud.delete(file_image);
+               // upload
+               await cloud.uploadImage(req.body.images)
+                  .then((url) => image_url = url)
+                  .catch((err) => res.status(500).send(err));
+               console.log("images -> " + image_url);
+               query += `file_image="${image_url}"`;
+
+            }
+            if (req.body.pdf.length > 300) {
+               // delete
+               cloud.delete(file_pdf);
+               // upload
+               await cloud.uploadPDF(req.body.pdf)
+                  .then((url) => pdf_url = url)
+                  .catch((err) => res.status(500).send(err));
+               console.log("pdf -> " + pdf_url);
+               query += `file_pdf="${pdf_url}"`;
+            }
+         }
+         await uploadFiles();
+         query += ` WHERE file_id=${file_id}`;
+         // update file image || pdf
+         if (req.body.images.length > 300 || req.body.pdf.length > 300) {
+            db.query(query, (err, result) => {
+               if (err) {
+                  return res.status(505).json({
+                     message: "Server Error",
+                     data: err,
+                  });
+               }
+            })
+         }
+         // update data in from
+         // console.log(req.body.info);
+         const queryInfo = `UPDATE research SET title='${title}',title_alternative='${title_alternative}',creator='${creator}',subject='${subject}',publisher='${publisher}', contributor='${contributor}',source='${source}',rights='${rights}',description='${description}' WHERE id=${research_id}`;
+         db.query(queryInfo, (err, info) => {
+            if (err) {
+               return res.status(505).json({
+                  message: "Server Error",
+                  data: err,
+               });
+            }
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
+         })
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err
+      });
+   }
+}
+
 exports.updateResearch = (req, res) => {
    try {
       const { file_id, research_id, user_id, title, title_alternative, creator, subject, publisher, contributor, source, rights, description } = JSON.parse(req.body.info);
@@ -400,6 +476,28 @@ exports.delResearchByUser = (req, res) => {
       })
    } catch (err) {
       // console.log(err);
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err
+      });
+   }
+}
+
+exports.isVerifiedResearch = (req, res) => {
+   try {
+      const { research_id } = req.body;
+      const query = `UPDATE research SET isVerified=1 WHERE id=${research_id}`;
+      db.query(query, (err, data) => {
+         data?.length ? data : data = [];
+         if (data) {
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
+         }
+      })
+   } catch (err) {
       return res.status(500).json({
          status: false,
          message: "Server Error",
