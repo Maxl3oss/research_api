@@ -38,6 +38,70 @@ exports.getAll = (req, res) => {
    }
 }
 
+exports.getAllResearch = (req, res) => {
+   try {
+      const page = req.query.page;
+      const per_page = req.query.per_page;
+      const start_idx = (page - 1) * per_page;
+      const type = req.query.type;
+      const search = req.query.search;
+
+      // let query = `SELECT *,file_image AS image FROM research LEFT JOIN files ON research.file_id=files.file_id HAVING isVerified=1`;
+      let query = `
+      SELECT research.id, research.title, research.date, research.isVerified, users.user_fname, users.user_lname FROM research
+      LEFT JOIN users_research ON users_research.research_id=research.id
+      LEFT JOIN users ON users.user_id=users_research.user_id 
+      ORDER BY research.id DESC
+      `;
+
+      if (search && type === "all") {
+         query = query.replace("HAVING isVerified=1", "");
+         query += ` AND title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%" AND isVerified=1`;
+      } else {
+         if (search && type) query += ` AND ${type} LIKE "%${search}%"`;
+      }
+
+      query += `  LIMIT ${start_idx},${per_page}`;
+
+      // console.log(query);
+
+      db.query(query, (err, data) => {
+         const qtyCount = query.replace("research.id, research.title, research.date, research.isVerified, users.user_fname, users.user_lname", "COUNT(id)").replace("ORDER BY research.id DESC", "").split(" ").slice(0, -2).join(" ");
+         data?.length ? data : data = [];
+         // console.log(data);
+         if (data.length) {
+            //count data research
+            db.query(qtyCount, (err, result) => {
+               const total = result[0]['count(id)'];
+               return res.status(200).json({
+                  status: "success",
+                  page: page,
+                  per_page: per_page,
+                  total: total,
+                  total_pages: Math.ceil(total / per_page),
+                  length: data.length,
+                  data: data,
+               });
+            });
+         } else {
+            return res.status(200).json({
+               status: "success",
+               message: "Not Found",
+               data: data,
+            });
+         }
+      })
+
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err,
+      });
+   }
+}
+
 exports.getFileById = (req, res) => {
    try {
       const { id } = req.params;
@@ -115,22 +179,27 @@ exports.getLimit = (req, res) => {
       const search = req.query.search;
 
       // let query = `SELECT *,file_image AS image FROM research LEFT JOIN files ON research.file_id=files.file_id HAVING isVerified=1`;
-      let query = `SELECT research.*, file_image AS image, CONCAT(users.user_fname ,' ', users.user_lname) AS user_name FROM research 
-                  LEFT JOIN files ON research.file_id=files.file_id
-                  LEFT JOIN users_research ON users_research.research_id=research.id 
-                  LEFT JOIN users ON users_research.user_id=users.user_id
-                  HAVING research.isVerified=1`
+      let query = `
+      SELECT research.*, file_image AS image, CONCAT(users.user_fname ,' ', users.user_lname) AS user_name FROM research 
+      LEFT JOIN files ON research.file_id=files.file_id
+      LEFT JOIN users_research ON users_research.research_id=research.id 
+      LEFT JOIN users ON users_research.user_id=users.user_id
+      HAVING research.isVerified=1
+      ORDER BY research.id DESC
+      `;
+
       if (search && type === "all") {
-         query = query.replace("HAVING isVerified=1", "");
-         query += ` AND title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%" AND isVerified=1`;
+         query = query.replace("HAVING research.isVerified=1", `WHERE (title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%") AND research.isVerified=1`);
       } else {
          if (search && type) query += ` AND ${type} LIKE "%${search}%"`;
       }
       query += ` LIMIT ${start_idx},${per_page}`;
+
       // console.log(query);
 
       db.query(query, (err, data) => {
-         const qtyCount = query.replace("research.*, file_image AS image, CONCAT(users.user_fname ,' ', users.user_lname) AS user_name", "COUNT(id)").replace("HAVING research.isVerified=1", "AND research.isVerified=1").replace("AND isVerified=1", "").split(" ").slice(0, -2).join(" ");
+         const qtyCount = query.replace("research.*, file_image AS image, CONCAT(users.user_fname ,' ', users.user_lname) AS user_name", "COUNT(id)").replace("HAVING research.isVerified=1", "WHERE research.isVerified=1").replace("ORDER BY research.id DESC", "").split(" ").slice(0, -2).join(" ");
+         // console.log(qtyCount);
          data?.length ? data : data = [];
          if (data.length) {
             //count data research
@@ -484,7 +553,7 @@ exports.delResearchByUser = (req, res) => {
    }
 }
 
-exports.isVerifiedResearch = (req, res) => {
+exports.verifiedResearch = (req, res) => {
    try {
       const { research_id } = req.body;
       const query = `UPDATE research SET isVerified=1 WHERE id=${research_id}`;
@@ -504,4 +573,33 @@ exports.isVerifiedResearch = (req, res) => {
          data: err
       });
    }
+}
+
+exports.unVerifiedResearch = (req, res) => {
+   try {
+      const { research_id } = req.body;
+      const query = `UPDATE research SET isVerified=0 WHERE id=${research_id}`;
+      db.query(query, (err, data) => {
+         data?.length ? data : data = [];
+         if (data) {
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
+         }
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err
+      });
+   }
+}
+
+exports.download = (req, res) => {
+   return res.status(200).json({
+      status: true,
+      message: "Ok"
+   })
 }

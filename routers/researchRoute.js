@@ -20,9 +20,11 @@ router.get("/get", researchController.getLimit);
 router.get("/get/:id", researchController.getById);
 router.post("/post", upload.any(), authenticateJWT, researchController.post);
 router.post("/update", upload.any(), authenticateJWT, researchController.updateResearchCloud);
+router.get("/download", authenticateJWT, researchController.download);
 // router.get("/file/:id/download", authenticateJWT, researchController.getFileById);
 router.get("/myResearch/:id", authenticateJWT, researchController.getResearchByUser);
 router.post("/del", authenticateJWT, researchController.delResearchByUser);
 
-router.post("/isVerified", authenticateJWT, isAdmin, researchController.isVerifiedResearch);
+router.post("/isVerified", authenticateJWT, isAdmin, researchController.verifiedResearch);
+router.post("/unVerified", authenticateJWT, isAdmin, researchController.unVerifiedResearch)
 module.exports = router;

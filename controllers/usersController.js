@@ -2,29 +2,26 @@ const db = require("../database/conn");
 const bcrypt = require("bcrypt");
 
 exports.getAll = (req, res) => {
-   try {
-      const query = `SELECT * FROM users`;
-      db.query(query, async (err, data) => {
+   const query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users`;
+   db.query(query, async (err, data) => {
+      try {
+         data?.length ? data : data = [];
          if (data.length) {
             return res.status(200).json({
                status: true,
                message: "Ok",
                data: data,
             });
-         } else {
-            return res.status(400).json({
-               status: false,
-               message: "Get Users Error",
-            });
          }
-      })
-   } catch (err) {
-      return res.status(500).json({
-         status: false,
-         message: "Server Error",
-         data: err,
-      });
-   }
+      } catch (err) {
+         return res.status(500).json({
+            status: false,
+            message: "Server Error",
+            data: err,
+         });
+      }
+   })
+
 }
 
 exports.editByUser = async (req, res) => {
