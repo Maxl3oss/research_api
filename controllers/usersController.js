@@ -2,25 +2,46 @@ const db = require("../database/conn");
 const bcrypt = require("bcrypt");
 
 exports.getAll = (req, res) => {
-   const query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users`;
-   db.query(query, async (err, data) => {
-      try {
+   try {
+      const page = req.query.page;
+      const per_page = req.query.per_page;
+      const start_idx = (page - 1) * per_page;
+
+      let query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users ORDER BY user_id DESC`;
+      query += ` LIMIT ${start_idx},${per_page} `;
+      // console.log(query);
+      db.query(query, async (err, data) => {
+         const qtyCount = `SELECT COUNT(user_id) FROM users`;
          data?.length ? data : data = [];
          if (data.length) {
-            return res.status(200).json({
-               status: true,
-               message: "Ok",
-               data: data,
+            db.query(qtyCount, (err, result) => {
+               const total = result[0]['count(user_id)'];
+               return res.status(200).json({
+                  status: true,
+                  page: page,
+                  per_page: per_page,
+                  total: total,
+                  total_pages: Math.ceil(total / per_page),
+                  length: data.length,
+                  data: data,
+               });
+            })
+         }
+         if (err) {
+            return res.status(500).json({
+               status: false,
+               message: "Server Error",
+               data: err,
             });
          }
-      } catch (err) {
-         return res.status(500).json({
-            status: false,
-            message: "Server Error",
-            data: err,
-         });
-      }
-   })
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err,
+      });
+   }
 
 }
 
@@ -35,7 +56,6 @@ exports.editByUser = async (req, res) => {
          query += `, user_pass="${hashPass}" `;
       }
       query += `WHERE user_id=${user_id}`;
-
       // console.log(query);
       db.query(query, (err, data) => {
          if (err) {
@@ -62,11 +82,10 @@ exports.editByUser = async (req, res) => {
 exports.getUserByEmail = (req, res) => {
    try {
       const { user_email } = req.body;
-      console.log(req.body);
+      // console.log(req.body);
       const query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users WHERE user_email="${user_email}"`;
-      console.log(query);
+      // console.log(query);
       db.query(query, (err, data) => {
-         console.log(data);
          if (err) {
             return res.status(505).json({
                message: "Server Error",
@@ -84,6 +103,74 @@ exports.getUserByEmail = (req, res) => {
          status: false,
          message: "Server Error",
          data: err,
+      });
+   }
+}
+
+exports.delUserById = (req, res) => {
+   try {
+      const { user_id } = req.body;
+      const query = `DELETE FROM users WHERE user_id=${user_id}`;
+      // console.log(query);
+      db.query(query, (err, data) => {
+         data?.length ? data : data = [];
+         if (data) {
+            return res.status(200).json({
+               status: true,
+               message: "OK",
+               data: data
+            });
+         }
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err,
+      });
+   }
+}
+
+exports.verifiedUser = (req, res) => {
+   try {
+      const { user_id } = req.body;
+      const query = `UPDATE users SET isVerified=1 WHERE user_id=${user_id}`;
+      db.query(query, (err, data) => {
+         data?.length ? data : data = [];
+         if (data) {
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
+         }
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err
+      });
+   }
+}
+
+exports.unVerifiedUser = (req, res) => {
+   try {
+      const { user_id } = req.body;
+      const query = `UPDATE users SET isVerified=0 WHERE user_id=${user_id}`;
+      db.query(query, (err, data) => {
+         data?.length ? data : data = [];
+         if (data) {
+            return res.status(200).json({
+               status: true,
+               message: "Ok"
+            });
+         }
+      })
+   } catch (err) {
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+         data: err
       });
    }
 }
