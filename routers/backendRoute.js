@@ -9,6 +9,7 @@ router.get("/dashboard", authenticateJWT, isAdmin, dashboardController.get);
 router.get("/getResearch", authenticateJWT, isAdmin, researchController.getAllResearch);
 router.get("/getUsers", authenticateJWT, isAdmin, usersController.getAll);
 router.post("/delUser", authenticateJWT, isAdmin, usersController.delUserById);
+router.post("/delResearch", authenticateJWT, isAdmin, researchController.delResearchById);
 router.post("/verified", authenticateJWT, isAdmin, usersController.verifiedUser);
 router.post("/unVerified", authenticateJWT, isAdmin, usersController.unVerifiedUser);
 

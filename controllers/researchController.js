@@ -423,90 +423,90 @@ exports.updateResearchCloud = async (req, res) => {
    }
 }
 
-exports.updateResearch = (req, res) => {
-   try {
-      const { file_id, research_id, user_id, title, title_alternative, creator, subject, publisher, contributor, source, rights, description } = JSON.parse(req.body.info);
-      // delete image in directory
-      const queryFiles = `SELECT file_pdf, file_image FROM files WHERE file_id=${file_id}`;
-      db.query(queryFiles, (err, data) => {
-         let { file_pdf, file_image } = data[0];
-         if (err) {
-            return res.status(505).json({
-               message: "Server Error",
-               data: err,
-            });
-         }
-         // update image 
-         const files = req.files;
-         let query = `UPDATE files SET `;
-         // console.log(files.length);
-         if (files.length >= 0) {
-            files.map((e, i) => {
-               if (i > 0) query += `, `;
-               if (files[i].fieldname === "images") {
-                  console.log("images -> " + files[i].path);
-                  query += `file_image="public/images/${files[i].filename}"`;
-                  // delete image 
-                  file_image = file_image.replace("public/", "");
-                  fs.unlink(path.join(__dirname, '../uploads/') + file_image, (err) => {
-                     if (err) {
-                        throw err;
-                     }
-                     console.log(`Delete File(${file_image}) successfully.`);
-                  });
-               }
-               if (files[i].fieldname === "pdf") {
-                  console.log("pdf -> " + files[i].path);
-                  query += `file_pdf="${files[i].filename}"`;
-                  // delete pdf
-                  fs.unlink(path.join(__dirname, '../uploads/pdf/') + file_pdf, (err) => {
-                     if (err) {
-                        throw err;
-                     }
-                     console.log(`Delete File(${file_pdf}) successfully.`);
-                  });
-               }
-            });
-         }
-         query += ` WHERE file_id=${file_id}`;
-         // if have image and pdf update
-         if (files.length > 0) {
-            db.query(query, (err, result) => {
-               // console.log(query);
-               // console.log(result);
-               if (err) {
-                  return res.status(505).json({
-                     message: "Server Error",
-                     data: err,
-                  });
-               }
-            })
-         }
-         // update data in from
-         // console.log(req.body.info);
-         const queryInfo = `UPDATE research SET title='${title}',title_alternative='${title_alternative}',creator='${creator}',subject='${subject}',publisher='${publisher}', contributor='${contributor}',source='${source}',rights='${rights}',description='${description}' WHERE id=${research_id}`;
-         db.query(queryInfo, (err, info) => {
-            if (err) {
-               return res.status(505).json({
-                  message: "Server Error",
-                  data: err,
-               });
-            }
-            return res.status(200).json({
-               status: true,
-               message: "Ok"
-            });
-         })
-      });
-   } catch (err) {
-      // console.log(err);
-      return res.status(500).json({
-         status: false,
-         message: "Server Error",
-         data: err
-      });
-   }
-}
+// exports.updateResearch = (req, res) => {
+//    try {
+//       const { file_id, research_id, user_id, title, title_alternative, creator, subject, publisher, contributor, source, rights, description } = JSON.parse(req.body.info);
+//       // delete image in directory
+//       const queryFiles = `SELECT file_pdf, file_image FROM files WHERE file_id=${file_id}`;
+//       db.query(queryFiles, (err, data) => {
+//          let { file_pdf, file_image } = data[0];
+//          if (err) {
+//             return res.status(505).json({
+//                message: "Server Error",
+//                data: err,
+//             });
+//          }
+//          // update image 
+//          const files = req.files;
+//          let query = `UPDATE files SET `;
+//          // console.log(files.length);
+//          if (files.length >= 0) {
+//             files.map((e, i) => {
+//                if (i > 0) query += `, `;
+//                if (files[i].fieldname === "images") {
+//                   console.log("images -> " + files[i].path);
+//                   query += `file_image="public/images/${files[i].filename}"`;
+//                   // delete image 
+//                   file_image = file_image.replace("public/", "");
+//                   fs.unlink(path.join(__dirname, '../uploads/') + file_image, (err) => {
+//                      if (err) {
+//                         throw err;
+//                      }
+//                      console.log(`Delete File(${file_image}) successfully.`);
+//                   });
+//                }
+//                if (files[i].fieldname === "pdf") {
+//                   console.log("pdf -> " + files[i].path);
+//                   query += `file_pdf="${files[i].filename}"`;
+//                   // delete pdf
+//                   fs.unlink(path.join(__dirname, '../uploads/pdf/') + file_pdf, (err) => {
+//                      if (err) {
+//                         throw err;
+//                      }
+//                      console.log(`Delete File(${file_pdf}) successfully.`);
+//                   });
+//                }
+//             });
+//          }
+//          query += ` WHERE file_id=${file_id}`;
+//          // if have image and pdf update
+//          if (files.length > 0) {
+//             db.query(query, (err, result) => {
+//                // console.log(query);
+//                // console.log(result);
+//                if (err) {
+//                   return res.status(505).json({
+//                      message: "Server Error",
+//                      data: err,
+//                   });
+//                }
+//             })
+//          }
+//          // update data in from
+//          // console.log(req.body.info);
+//          const queryInfo = `UPDATE research SET title='${title}',title_alternative='${title_alternative}',creator='${creator}',subject='${subject}',publisher='${publisher}', contributor='${contributor}',source='${source}',rights='${rights}',description='${description}' WHERE id=${research_id}`;
+//          db.query(queryInfo, (err, info) => {
+//             if (err) {
+//                return res.status(505).json({
+//                   message: "Server Error",
+//                   data: err,
+//                });
+//             }
+//             return res.status(200).json({
+//                status: true,
+//                message: "Ok"
+//             });
+//          })
+//       });
+//    } catch (err) {
+//       // console.log(err);
+//       return res.status(500).json({
+//          status: false,
+//          message: "Server Error",
+//          data: err
+//       });
+//    }
+// }
 
 exports.delResearchByUser = (req, res) => {
    try {
@@ -553,6 +553,31 @@ exports.delResearchByUser = (req, res) => {
    }
 }
 
+exports.delResearchById = async (req, res) => {
+   try {
+      const { research_id } = req.body;
+      const query = `SELECT research.file_id, files.file_pdf, files.file_image FROM research LEFT JOIN files ON (research.file_id=files.file_id) WHERE research.id = ${research_id}`
+      db.query(query, async (err, result) => {
+         const { file_id, file_pdf, file_image } = result[0];
+         db.query(`DELETE research, files, users_research FROM research INNER JOIN files ON research.file_id=files.file_id INNER JOIN users_research ON research.id=users_research.research_id WHERE research.id=${research_id}`);
+         cloud.delete(file_pdf);
+         cloud.delete(file_image);
+
+         return res.status(200).json({
+            status: true,
+            message: "OK",
+         });
+      })
+
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+      });
+   }
+}
+
 exports.verifiedResearch = (req, res) => {
    try {
       const { research_id } = req.body;
@@ -586,6 +611,9 @@ exports.unVerifiedResearch = (req, res) => {
                status: true,
                message: "Ok"
             });
+         }
+         if (err) {
+            return res.send(err);
          }
       })
    } catch (err) {
