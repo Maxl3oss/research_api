@@ -12,6 +12,7 @@ router.post("/delUser", authenticateJWT, isAdmin, usersController.delUserById);
 router.post("/delResearch", authenticateJWT, isAdmin, researchController.delResearchById);
 router.post("/verified", authenticateJWT, isAdmin, usersController.verifiedUser);
 router.post("/unVerified", authenticateJWT, isAdmin, usersController.unVerifiedUser);
-
+router.get("/getUser/:id", authenticateJWT, isAdmin, usersController.getUserById);
+router.post("/editUser", authenticateJWT, isAdmin, usersController.editUserById);
 
 module.exports = router;

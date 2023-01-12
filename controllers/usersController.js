@@ -39,10 +39,29 @@ exports.getAll = (req, res) => {
       return res.status(500).json({
          status: false,
          message: "Server Error",
-         data: err,
       });
    }
 
+}
+exports.getUserById = (req, res) => {
+   try {
+      const { id } = req.params;
+      const query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users WHERE user_id = ${id}`;
+      db.query(query, (err, data) => {
+         if (err) return res.send(err);
+         return res.status(200).json({
+            status: true,
+            message: "OK",
+            data: data[0]
+         })
+      })
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
+      });
+   }
 }
 
 exports.editByUser = async (req, res) => {
@@ -59,10 +78,7 @@ exports.editByUser = async (req, res) => {
       // console.log(query);
       db.query(query, (err, data) => {
          if (err) {
-            return res.status(505).json({
-               message: "Server Error",
-               data: err,
-            });
+            return res.send(err);
          }
          return res.status(200).json({
             status: true,
@@ -79,18 +95,22 @@ exports.editByUser = async (req, res) => {
    }
 }
 
-exports.getUserByEmail = (req, res) => {
+exports.editUserById = async (req, res) => {
    try {
-      const { user_email } = req.body;
       // console.log(req.body);
-      const query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users WHERE user_email="${user_email}"`;
-      // console.log(query);
+      const { user_id, user_fname, user_lname } = req.body;
+      let { user_pass, role_id } = req.body;
+      let query = `UPDATE users SET user_fname="${user_fname}", user_lname="${user_lname}" `;
+      if (user_pass) {
+         const hashPass = await bcrypt.hash(user_pass, 10);
+         query += `, user_pass="${hashPass}" `;
+      }
+      if (role_id) query += `, role_id="${role_id} "`
+      query += `WHERE user_id=${user_id}`;
+      console.log(query);
       db.query(query, (err, data) => {
          if (err) {
-            return res.status(505).json({
-               message: "Server Error",
-               data: err,
-            });
+            return res.status(500).send(err);
          }
          return res.status(200).json({
             status: true,
@@ -99,10 +119,35 @@ exports.getUserByEmail = (req, res) => {
          });
       })
    } catch (err) {
+      console.log(err);
       return res.status(500).json({
          status: false,
          message: "Server Error",
-         data: err,
+      });
+   }
+}
+
+exports.getUserByEmail = (req, res) => {
+   try {
+      const { user_email } = req.body;
+      // console.log(req.body);
+      const query = `SELECT user_id, user_fname, user_lname, user_email, role_id, isVerified FROM users WHERE user_email="${user_email}"`;
+      // console.log(query);
+      db.query(query, (err, data) => {
+         if (err) {
+            return res.send(err);
+         }
+         return res.status(200).json({
+            status: true,
+            message: "OK",
+            data: data
+         });
+      })
+   } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+         status: false,
+         message: "Server Error",
       });
    }
 }

@@ -191,9 +191,12 @@ exports.getLimit = (req, res) => {
       if (search && type === "all") {
          query = query.replace("HAVING research.isVerified=1", `WHERE (title LIKE "%${search}%" OR creator LIKE "%${search}%" OR description LIKE "%${search}%") AND research.isVerified=1`);
       } else {
-         if (search && type) query += ` AND ${type} LIKE "%${search}%"`;
+         if (search && type) {
+            query = query.replace("HAVING research.isVerified=1", `WHERE research.isVerified=1 AND research.${type} LIKE "%${search}%"`);
+            // query += ` AND ${type} LIKE "%${search}%"`;
+         }
       }
-      query += ` LIMIT ${start_idx},${per_page}`;
+      query += `LIMIT ${start_idx},${per_page}`;
 
       // console.log(query);
 
