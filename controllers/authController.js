@@ -1,8 +1,8 @@
 const db = require("../database/conn");
 const bcrypt = require("bcrypt");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-require('dotenv').config();
+require("dotenv").config();
 
 exports.signIn = (req, res) => {
   const { email, pass } = req.body;
@@ -10,7 +10,7 @@ exports.signIn = (req, res) => {
   const query = `SELECT * FROM users WHERE user_email = "${email}"`;
   db.query(query, async (err, data) => {
     // console.log(data);
-    data?.length ? data : data = [];
+    data.length ? data : (data = []);
     if (data.length > 0) {
       // if not verify email
       if (data[0].isVerified === 0) {
@@ -23,22 +23,27 @@ exports.signIn = (req, res) => {
       const isCorrect = await bcrypt.compare(pass, data[0].user_pass);
       if (isCorrect) {
         const user = { userId: data[0].user_id, email: data[0].user_email };
-        const token = jwt.sign(user, process.env.TOKEN_SECRET, { expiresIn: '1D' });
-        // const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
-        delete data[0]['user_pass'];
-        // console.log(data);
-        return res.cookie("access_token", token, {
-          httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000,
-          sameSite: 'None',
-          secure: process.env.NODE_ENV === "production",
-        }).status(200).json({
-          status: "success",
-          message: "Login successfully",
-          data: data,
-          token: token,
-          // refreshToken: refreshToken,
+        const token = jwt.sign(user, process.env.TOKEN_SECRET, {
+          expiresIn: "1D",
         });
+        // const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1h' });
+        delete data[0]["user_pass"];
+        // console.log(data);
+        return res
+          .cookie("access_token", token, {
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+            sameSite: "None",
+            secure: process.env.NODE_ENV === "production",
+          })
+          .status(200)
+          .json({
+            status: "success",
+            message: "Login successfully",
+            data: data,
+            token: token,
+            // refreshToken: refreshToken,
+          });
       } else {
         return res.status(401).json({
           status: "fail",
@@ -65,13 +70,12 @@ exports.signUp = async (req, res) => {
       return;
     }
     //send verify email
-    const tokenMail = jwt.sign({ mail: email },
-      process.env.TOKEN_SECRET, {
-      expiresIn: '1h'
+    const tokenMail = jwt.sign({ mail: email }, process.env.TOKEN_SECRET, {
+      expiresIn: "1h",
     });
 
     const tranSporter = nodemailer.createTransport({
-      service: 'gmail',
+      service: "gmail",
       auth: {
         user: process.env.EMAIL,
         pass: process.env.PASS,
@@ -106,25 +110,27 @@ exports.signUp = async (req, res) => {
                 </a>
             </div>
       `,
-      attachments: [{
-        path: __dirname + "/images/sendTYmailer.png",
-        cid: "imageMailer",
-      }],
-    }
+      attachments: [
+        {
+          path: __dirname + "/images/sendTYmailer.png",
+          cid: "imageMailer",
+        },
+      ],
+    };
     tranSporter.sendMail(option, (err, info) => {
       if (err) {
-        console.log('error => ', err);
+        console.log("error => ", err);
         return res.status(400).json({
           status: "fail",
           message: "Fail to send mail.",
         });
         return;
       } else {
-        console.log('Send => ' + info.response);
+        console.log("Send => " + info.response);
         return res.status(200).json({
           status: "success",
           message: `Send verify to (${email}).`,
-          data: data
+          data: data,
         });
       }
     });
@@ -133,10 +139,11 @@ exports.signUp = async (req, res) => {
 };
 
 exports.signOut = async (req, res) => {
-  return res.status(200)
+  return res
+    .status(200)
     .clearCookie("access_token")
     .json({ message: "Successfully sign out." });
-}
+};
 
 // exports.refreshToken = (req, res) => {
 //   if (req.cookies?.access_token) {
